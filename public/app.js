@@ -208,11 +208,11 @@ form.addEventListener('submit', async (e) => {
   hideResult();
 
   try {
-    // Call the API
-    updateProgress(10, 'Generating slides with AI...');
-    console.log('[Frontend] Starting generation with data:', data);
+    // Call the ASYNC API - returns immediately, then poll for results
+    updateProgress(5, 'Starting job...');
+    console.log('[Frontend] Starting async generation with data:', data);
 
-    const response = await fetch('/.netlify/functions/generate-slides', {
+    const startResponse = await fetch('/.netlify/functions/generate-slides-async', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -220,47 +220,40 @@ form.addEventListener('submit', async (e) => {
       body: JSON.stringify(data)
     });
 
-    console.log('[Frontend] Response status:', response.status);
-    console.log('[Frontend] Response headers:', Object.fromEntries(response.headers.entries()));
-
-    if (!response.ok) {
-      const error = await response.json();
-      console.error('[Frontend] Error response:', error);
-      throw new Error(error.error || 'Generation failed');
+    if (!startResponse.ok) {
+      const error = await startResponse.json();
+      console.error('[Frontend] Error starting job:', error);
+      throw new Error(error.error || 'Failed to start job');
     }
 
-    updateProgress(50, 'Building Reveal.js presentation...');
+    const startResult = await startResponse.json();
+    console.log('[Frontend] Job started:', startResult.jobId);
 
-    const resultData = await response.json();
+    // Poll for completion
+    updateProgress(10, 'Generating slides with AI...');
+    const resultData = await pollJobStatus(startResult.pollUrl);
     console.log('[Frontend] Result data:', resultData);
 
-    updateProgress(90, 'Finalizing...');
-
-    if (!resultData.success) {
-      console.error('[Frontend] Generation failed:', resultData.error);
-      throw new Error(resultData.error || 'Unknown error');
-    }
-
     // Store markdown
-    generatedMarkdown = resultData.data.markdown;
+    generatedMarkdown = resultData.markdown;
     console.log('[Frontend] Generated markdown length:', generatedMarkdown?.length);
 
     // Deploy to GitHub if credentials provided
-    if (resultData.data.github) {
+    if (!testModeCheckbox.checked && data.githubUsername && data.githubPAT && data.repoName) {
       updateProgress(70, 'Deploying to GitHub Pages...');
       console.log('[Frontend] Starting GitHub deployment...');
 
       try {
         const deployUrl = await deployToGitHub(
-          resultData.data.html,
-          resultData.data.github.username,
-          resultData.data.github.token,
-          resultData.data.github.repo
+          resultData.html,
+          data.githubUsername,
+          data.githubPAT,
+          data.repoName
         );
 
-        resultData.data.deployment = {
+        resultData.deployment = {
           url: deployUrl,
-          repository: `${resultData.data.github.username}/${resultData.data.github.repo}`,
+          repository: `${data.githubUsername}/${data.repoName}`,
           branch: 'gh-pages'
         };
 
@@ -271,12 +264,12 @@ form.addEventListener('submit', async (e) => {
       }
     }
 
-    updateProgress(90, 'Finalizing...');
+    updateProgress(95, 'Complete!');
 
     // Show result
     setTimeout(() => {
       hideStatus();
-      showResult(resultData.data);
+      showResult(resultData);
       console.log('[Frontend] ✅ Generation complete!');
     }, 500);
 
@@ -287,6 +280,39 @@ form.addEventListener('submit', async (e) => {
     alert('Error: ' + error.message);
   }
 });
+
+// Poll job status until complete
+async function pollJobStatus(pollUrl) {
+  console.log('[Frontend] Polling for job status...');
+
+  while (true) {
+    await new Promise(resolve => setTimeout(resolve, 2000)); // Poll every 2 seconds
+
+    const response = await fetch(pollUrl);
+    if (!response.ok) {
+      throw new Error('Failed to check job status');
+    }
+
+    const job = await response.json();
+    console.log('[Frontend] Job status:', job.status, `${job.progress}%`, job.message);
+
+    // Update progress bar with real-time status
+    if (job.progress) {
+      updateProgress(job.progress, job.message);
+    }
+
+    if (job.status === 'completed') {
+      console.log('[Frontend] ✅ Job completed!');
+      return job.data;
+    }
+
+    if (job.status === 'failed') {
+      throw new Error(job.error || 'Job failed');
+    }
+
+    // Continue polling if still processing
+  }
+}
 
 // Deploy to GitHub (client-side)
 async function deployToGitHub(html, username, token, repo) {
