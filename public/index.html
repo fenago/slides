@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Slides Generator - Create Amazing Presentations</title>
+    <meta name="description" content="Generate professional, engaging presentations using AI with support for Claude, GPT, Gemini, and more. Deploy directly to GitHub Pages.">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                    <rect width="40" height="40" rx="8" fill="url(#grad1)"/>
+                    <path d="M10 15h20M10 20h20M10 25h20" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                    <defs>
+                        <linearGradient id="grad1" x1="0" y1="0" x2="40" y2="40">
+                            <stop offset="0%" style="stop-color:#667eea"/>
+                            <stop offset="100%" style="stop-color:#764ba2"/>
+                        </linearGradient>
+                    </defs>
+                </svg>
+                <h1>AI Slides Generator</h1>
+            </div>
+            <p class="tagline">Create stunning presentations with AI • Deploy to GitHub Pages</p>
+        </header>
+
+        <!-- Main Form -->
+        <form id="slideForm" class="slide-form">
+
+            <!-- Section 1: LLM Provider -->
+            <section class="form-section">
+                <h2>1. Choose AI Provider</h2>
+                <p class="section-description">Select your preferred AI model provider</p>
+
+                <div class="provider-grid">
+                    <label class="provider-card">
+                        <input type="radio" name="provider" value="anthropic" required>
+                        <div class="card-content">
+                            <div class="card-icon">🤖</div>
+                            <h3>Anthropic Claude</h3>
+                            <p>Latest Claude models</p>
+                        </div>
+                    </label>
+
+                    <label class="provider-card">
+                        <input type="radio" name="provider" value="openai">
+                        <div class="card-content">
+                            <div class="card-icon">✨</div>
+                            <h3>OpenAI GPT</h3>
+                            <p>GPT-4, GPT-4o, o1</p>
+                        </div>
+                    </label>
+
+                    <label class="provider-card">
+                        <input type="radio" name="provider" value="google">
+                        <div class="card-content">
+                            <div class="card-icon">🔮</div>
+                            <h3>Google Gemini</h3>
+                            <p>Gemini 2.5 series</p>
+                        </div>
+                    </label>
+
+                    <label class="provider-card">
+                        <input type="radio" name="provider" value="openrouter">
+                        <div class="card-content">
+                            <div class="card-icon">🌐</div>
+                            <h3>OpenRouter</h3>
+                            <p>400+ models</p>
+                        </div>
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label for="apiKey">API Key</label>
+                    <div class="input-with-help">
+                        <input type="password" id="apiKey" name="apiKey" required
+                               placeholder="Enter your API key...">
+                        <span class="help-text" id="apiKeyHelp">
+                            <a href="#" target="_blank" id="apiKeyLink">Get API key →</a>
+                        </span>
+                    </div>
+                    <small class="security-notice">🔒 Your API key is never stored. It's used only for this generation.</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="model">Model</label>
+                    <select id="model" name="model" disabled required>
+                        <option value="">First, enter your API key and click "Fetch Models"</option>
+                    </select>
+                    <button type="button" id="fetchModels" class="btn btn-secondary" disabled>
+                        Fetch Models
+                    </button>
+                    <small id="modelInfo" class="model-info"></small>
+                </div>
+            </section>
+
+            <!-- Section 2: Presentation Details -->
+            <section class="form-section">
+                <h2>2. Describe Your Presentation</h2>
+                <p class="section-description">Tell the AI what you want to create</p>
+
+                <div class="form-group">
+                    <label for="topic">Topic / Description</label>
+                    <textarea id="topic" name="topic" rows="4" required
+                              placeholder="Example: AI in Education for College Professors - covering practical applications, ethical considerations, and implementation strategies"></textarea>
+                    <small>Be specific! The more detail, the better the results.</small>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="audience">Target Audience</label>
+                        <input type="text" id="audience" name="audience"
+                               placeholder="e.g., College professors" value="general audience">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="slideCount">Number of Slides</label>
+                        <input type="number" id="slideCount" name="slideCount"
+                               min="5" max="30" value="8">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="tone">Tone</label>
+                        <select id="tone" name="tone">
+                            <option value="professional">Professional</option>
+                            <option value="casual">Casual</option>
+                            <option value="academic">Academic</option>
+                            <option value="inspiring">Inspiring</option>
+                            <option value="humorous">Humorous</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="topicType">Topic Type</label>
+                        <select id="topicType" name="topicType">
+                            <option value="general">General</option>
+                            <option value="technical">Technical</option>
+                            <option value="business">Business</option>
+                            <option value="educational">Educational</option>
+                            <option value="creative">Creative</option>
+                        </select>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 3: GitHub Deployment -->
+            <section class="form-section">
+                <h2>3. GitHub Deployment</h2>
+                <p class="section-description">Deploy your presentation to GitHub Pages</p>
+
+                <div class="form-group">
+                    <label for="githubUsername">GitHub Username</label>
+                    <input type="text" id="githubUsername" name="githubUsername" required
+                           placeholder="your-username">
+                </div>
+
+                <div class="form-group">
+                    <label for="githubPAT">GitHub Personal Access Token</label>
+                    <div class="input-with-help">
+                        <input type="password" id="githubPAT" name="githubPAT" required
+                               placeholder="ghp_...">
+                        <span class="help-text">
+                            <a href="https://github.com/settings/tokens" target="_blank">Create token →</a>
+                        </span>
+                    </div>
+                    <small>Required permissions: <code>repo</code>, <code>workflow</code></small>
+                </div>
+
+                <div class="form-group">
+                    <label for="repoName">Repository Name</label>
+                    <input type="text" id="repoName" name="repoName" required
+                           placeholder="my-awesome-presentation"
+                           pattern="[a-zA-Z0-9-_]+"
+                           title="Only letters, numbers, hyphens, and underscores">
+                    <small>We'll create it if it doesn't exist</small>
+                </div>
+            </section>
+
+            <!-- Section 4: Reveal.js Settings (Collapsible) -->
+            <section class="form-section collapsible">
+                <button type="button" class="section-toggle" onclick="toggleSection('revealSettings')">
+                    <h2>4. Reveal.js Settings (Optional)</h2>
+                    <span class="toggle-icon">▼</span>
+                </button>
+
+                <div id="revealSettings" class="collapsible-content">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="theme">Theme</label>
+                            <select id="theme" name="theme">
+                                <option value="black" selected>Black</option>
+                                <option value="white">White</option>
+                                <option value="league">League</option>
+                                <option value="beige">Beige</option>
+                                <option value="sky">Sky</option>
+                                <option value="night">Night</option>
+                                <option value="serif">Serif</option>
+                                <option value="simple">Simple</option>
+                                <option value="solarized">Solarized</option>
+                                <option value="blood">Blood</option>
+                                <option value="moon">Moon</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="transition">Transition</label>
+                            <select id="transition" name="transition">
+                                <option value="slide" selected>Slide</option>
+                                <option value="fade">Fade</option>
+                                <option value="convex">Convex</option>
+                                <option value="concave">Concave</option>
+                                <option value="zoom">Zoom</option>
+                                <option value="none">None</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="checkbox-grid">
+                        <label class="checkbox-item">
+                            <input type="checkbox" name="controls" checked>
+                            <span>Navigation Controls</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" name="progress" checked>
+                            <span>Progress Bar</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" name="slideNumber">
+                            <span>Slide Numbers</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" name="center" checked>
+                            <span>Center Slides</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" name="hash" checked>
+                            <span>URL Hash</span>
+                        </label>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Test Mode Toggle -->
+            <section class="form-section">
+                <label class="checkbox-item test-mode">
+                    <input type="checkbox" id="testMode" name="testMode">
+                    <span>
+                        <strong>Test Mode</strong>
+                        <small>(Generate sample slides without using API)</small>
+                    </span>
+                </label>
+            </section>
+
+            <!-- Submit Button -->
+            <button type="submit" id="generateBtn" class="btn btn-primary btn-large">
+                <span class="btn-icon">🚀</span>
+                Generate Presentation
+            </button>
+        </form>
+
+        <!-- Status Display -->
+        <div id="status" class="status hidden">
+            <div class="status-content">
+                <div class="spinner"></div>
+                <p id="statusMessage">Initializing...</p>
+                <div id="statusProgress" class="progress-bar">
+                    <div id="progressFill" class="progress-fill"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Result Display -->
+        <div id="result" class="result hidden">
+            <div class="result-content">
+                <h2>✅ Presentation Ready!</h2>
+                <div class="result-url">
+                    <input type="text" id="resultURL" readonly>
+                    <button type="button" id="copyURL" class="btn btn-secondary">Copy</button>
+                </div>
+                <div class="result-actions">
+                    <a id="viewPresentation" href="#" target="_blank" class="btn btn-primary">
+                        View Presentation →
+                    </a>
+                    <button type="button" id="downloadMarkdown" class="btn btn-secondary">
+                        Download Markdown
+                    </button>
+                    <button type="button" id="createAnother" class="btn btn-secondary">
+                        Create Another
+                    </button>
+                </div>
+                <div id="resultDetails" class="result-details"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,34 @@
+{
+  "name": "ai-slides-generator",
+  "version": "1.0.0",
+  "description": "AI-powered presentation generator using Reveal.js with multi-LLM support and instructional design best practices",
+  "main": "index.js",
+  "scripts": {
+    "dev": "netlify dev",
+    "build": "echo 'No build step needed - static site'",
+    "deploy": "netlify deploy --prod",
+    "test": "echo 'Tests coming soon'"
+  },
+  "keywords": [
+    "reveal.js",
+    "presentations",
+    "ai",
+    "slides",
+    "claude",
+    "gpt",
+    "gemini",
+    "instructional-design"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.32.1",
+    "@google/generative-ai": "^0.21.0",
+    "@octokit/rest": "^21.0.2",
+    "openai": "^4.76.1",
+    "reveal-md": "^6.1.3"
+  },
+  "devDependencies": {
+    "netlify-cli": "^17.37.1"
+  }
+}
