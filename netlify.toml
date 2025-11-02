@@ -20,3 +20,6 @@
   node_bundler = "esbuild"
   external_node_modules = ["@anthropic-ai/sdk", "openai", "@google/generative-ai", "@octokit/rest", "reveal-md"]
   included_files = ["modules/**/*", "templates/**/*"]
+
+[functions."generate-slides"]
+  timeout = 60
