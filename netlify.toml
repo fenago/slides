@@ -17,5 +17,6 @@
     Referrer-Policy = "strict-origin-when-cross-origin"
 
 [functions]
-  node_bundler = "esbuild"
+  node_bundler = "nft"
   included_files = ["modules/**", "templates/**"]
+  external_node_modules = ["@anthropic-ai/sdk", "openai", "@google/generative-ai", "@octokit/rest"]
