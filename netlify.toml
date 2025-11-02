@@ -18,7 +18,4 @@
 
 [functions]
   node_bundler = "esbuild"
-
-[[functions]]
-  path = "/.netlify/functions/*"
   included_files = ["modules/**", "templates/**"]
