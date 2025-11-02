@@ -19,7 +19,4 @@
 [functions]
   node_bundler = "esbuild"
   external_node_modules = ["@anthropic-ai/sdk", "openai", "@google/generative-ai", "@octokit/rest", "reveal-md"]
-
-[[functions]]
-  pattern = "**/*.js"
   included_files = ["modules/**/*", "templates/**/*"]
