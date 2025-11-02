@@ -124,6 +124,9 @@ exports.handler = async (event, context) => {
     // STEP 2: Build Reveal.js presentation
     console.log('🔨 Building Reveal.js presentation...');
 
+    // Detect serverless environment
+    const isServerless = process.cwd() === '/var/task' || process.env.AWS_LAMBDA_FUNCTION_NAME;
+
     const buildOptions = {
       theme: theme || 'black',
       highlightTheme: highlightTheme || 'monokai',
@@ -138,7 +141,7 @@ exports.handler = async (event, context) => {
       navigationMode: navigationMode || 'default',
       autoSlide: autoSlide || 0,
       loop: loop || false,
-      outputDir: 'dist'
+      outputDir: isServerless ? '/tmp/dist' : 'dist'
     };
 
     const buildResult = await buildRevealPresentation(slideData.filepath, buildOptions);
