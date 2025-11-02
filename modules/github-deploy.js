@@ -3,7 +3,6 @@
  * Deploys Reveal.js presentations to user's GitHub Pages
  */
 
-const { Octokit } = require('@octokit/rest');
 const fs = require('fs').promises;
 const path = require('path');
 
@@ -20,6 +19,8 @@ async function deployToGitHubPages(username, token, repoName, distPath) {
   console.log(`   User: ${username}`);
   console.log(`   Repo: ${repoName}`);
 
+  // Dynamic import for ES Module
+  const { Octokit } = await import('@octokit/rest');
   const octokit = new Octokit({ auth: token });
 
   try {
