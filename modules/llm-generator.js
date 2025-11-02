@@ -52,14 +52,15 @@ async function generateSlides(config) {
 
     console.log(`✅ Slides generated in ${duration}s`);
 
-    // Save to file
+    // Save to file (use /tmp for serverless environments)
     const timestamp = Date.now();
     const sanitizedTopic = topic.replace(/[^a-z0-9]/gi, '-').toLowerCase().substring(0, 50);
     const filename = `slides-${sanitizedTopic}-${timestamp}.md`;
-    const filepath = path.join(process.cwd(), 'generated', filename);
+    const outputDir = process.env.NETLIFY ? '/tmp' : path.join(process.cwd(), 'generated');
+    const filepath = path.join(outputDir, filename);
 
-    // Ensure generated directory exists
-    await fs.mkdir(path.join(process.cwd(), 'generated'), { recursive: true });
+    // Ensure output directory exists
+    await fs.mkdir(outputDir, { recursive: true });
 
     // Add metadata header
     const metadata = `<!--
@@ -293,9 +294,10 @@ Here's my challenge to you: Pick ONE thing we discussed today. Just one. Apply i
   const timestamp = Date.now();
   const sanitizedTopic = topic.replace(/[^a-z0-9]/gi, '-').toLowerCase().substring(0, 50);
   const filename = `slides-${sanitizedTopic}-${timestamp}.md`;
-  const filepath = path.join(process.cwd(), 'generated', filename);
+  const outputDir = process.env.NETLIFY ? '/tmp' : path.join(process.cwd(), 'generated');
+  const filepath = path.join(outputDir, filename);
 
-  await fs.mkdir(path.join(process.cwd(), 'generated'), { recursive: true });
+  await fs.mkdir(outputDir, { recursive: true });
   await fs.writeFile(filepath, sampleSlides);
 
   return {
