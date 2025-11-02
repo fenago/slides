@@ -5,7 +5,7 @@
 
 const { generateSlides, generateSampleSlides } = require('../../modules/llm-generator');
 const { generateUserPrompt, getCustomSystemPrompt, INSTRUCTIONAL_DESIGN_SYSTEM_PROMPT } = require('../../modules/prompts');
-const { buildRevealPresentation } = require('../../modules/reveal-builder');
+const { buildStaticPresentation } = require('../../modules/reveal-html-generator');
 const { deployToGitHubPages } = require('../../modules/github-deploy');
 
 exports.handler = async (event, context) => {
@@ -121,52 +121,39 @@ exports.handler = async (event, context) => {
 
     console.log('✅ Slides generated:', slideData.filename);
 
-    // Detect serverless environment
-    const isServerless = process.cwd() === '/var/task' || process.env.AWS_LAMBDA_FUNCTION_NAME;
+    // STEP 2: Build Reveal.js presentation (using HTML generator - works in serverless!)
+    console.log('🔨 Building Reveal.js presentation...');
 
-    // STEP 2: Build Reveal.js presentation (SKIP in serverless - reveal-md CLI doesn't work)
-    let buildResult = null;
+    const isServerless = process.cwd() === '/var/task' || process.env.AWS_LAMBDA_FUNCTION_NAME;
+    const outputDir = isServerless ? '/tmp/dist' : 'dist';
+
+    const buildOptions = {
+      theme: theme || 'black',
+      transition: transition || 'slide',
+      controls: controls !== false,
+      progress: progress !== false,
+      slideNumber: slideNumber || false,
+      hash: hash !== false,
+      center: center !== false
+    };
+
+    const buildResult = await buildStaticPresentation(slideData.markdown, outputDir, buildOptions);
+    console.log('✅ Presentation built');
+
+    // STEP 3: Deploy to GitHub Pages (skip in test mode)
     let deploymentResult = null;
 
-    if (!isServerless) {
-      console.log('🔨 Building Reveal.js presentation...');
+    if (!testMode && githubUsername && githubPAT && repoName) {
+      console.log('🚀 Deploying to GitHub Pages...');
 
-      const buildOptions = {
-        theme: theme || 'black',
-        highlightTheme: highlightTheme || 'monokai',
-        transition: transition || 'slide',
-        transitionSpeed: transitionSpeed || 'default',
-        controls: controls !== false,
-        progress: progress !== false,
-        slideNumber: slideNumber || false,
-        hash: hash !== false,
-        center: center !== false,
-        backgroundTransition: backgroundTransition || 'fade',
-        navigationMode: navigationMode || 'default',
-        autoSlide: autoSlide || 0,
-        loop: loop || false,
-        outputDir: 'dist'
-      };
+      deploymentResult = await deployToGitHubPages(
+        githubUsername,
+        githubPAT,
+        repoName,
+        buildResult.outputDir
+      );
 
-      buildResult = await buildRevealPresentation(slideData.filepath, buildOptions);
-      console.log('✅ Presentation built');
-
-      // STEP 3: Deploy to GitHub Pages
-      if (!testMode && githubUsername && githubPAT && repoName) {
-        console.log('🚀 Deploying to GitHub Pages...');
-
-        deploymentResult = await deployToGitHubPages(
-          githubUsername,
-          githubPAT,
-          repoName,
-          buildResult.outputDir
-        );
-
-        console.log('✅ Deployed:', deploymentResult.url);
-      }
-    } else {
-      console.log('⚠️  Serverless environment detected - skipping Reveal.js build and GitHub deployment');
-      console.log('💡 Download the markdown and build locally with: npx reveal-md slides.md --static dist');
+      console.log('✅ Deployed:', deploymentResult.url);
     }
 
     // Success response
@@ -177,9 +164,7 @@ exports.handler = async (event, context) => {
       },
       body: JSON.stringify({
         success: true,
-        message: isServerless
-          ? 'Slides generated! Download the markdown and build locally.'
-          : 'Presentation generated successfully!',
+        message: 'Presentation generated successfully!',
         data: {
           slides: {
             filename: slideData.filename,
@@ -188,21 +173,16 @@ exports.handler = async (event, context) => {
             provider: slideData.metadata.provider,
             model: slideData.metadata.model
           },
-          build: buildResult ? {
+          build: {
             theme: buildResult.theme,
             outputDir: buildResult.outputDir
-          } : null,
+          },
           deployment: deploymentResult ? {
             url: deploymentResult.url,
             repository: `${deploymentResult.username}/${deploymentResult.repoName}`,
             branch: deploymentResult.branch
           } : null,
-          markdown: slideData.markdown, // Include markdown in response
-          instructions: isServerless ? {
-            step1: 'Download the markdown file below',
-            step2: 'Run: npx reveal-md slides.md --static dist --theme black',
-            step3: 'Deploy the dist folder to GitHub Pages or any static host'
-          } : null
+          markdown: slideData.markdown // Include markdown in response
         }
       })
     };
