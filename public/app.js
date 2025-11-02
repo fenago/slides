@@ -210,6 +210,7 @@ form.addEventListener('submit', async (e) => {
   try {
     // Call the API
     updateProgress(10, 'Generating slides with AI...');
+    console.log('[Frontend] Starting generation with data:', data);
 
     const response = await fetch('/.netlify/functions/generate-slides', {
       method: 'POST',
@@ -219,31 +220,41 @@ form.addEventListener('submit', async (e) => {
       body: JSON.stringify(data)
     });
 
+    console.log('[Frontend] Response status:', response.status);
+    console.log('[Frontend] Response headers:', Object.fromEntries(response.headers.entries()));
+
     if (!response.ok) {
       const error = await response.json();
+      console.error('[Frontend] Error response:', error);
       throw new Error(error.error || 'Generation failed');
     }
 
     updateProgress(50, 'Building Reveal.js presentation...');
 
     const resultData = await response.json();
+    console.log('[Frontend] Result data:', resultData);
 
     updateProgress(90, 'Finalizing...');
 
     if (!resultData.success) {
+      console.error('[Frontend] Generation failed:', resultData.error);
       throw new Error(resultData.error || 'Unknown error');
     }
 
     // Store markdown
     generatedMarkdown = resultData.data.markdown;
+    console.log('[Frontend] Generated markdown length:', generatedMarkdown?.length);
 
     // Show result
     setTimeout(() => {
       hideStatus();
       showResult(resultData.data);
+      console.log('[Frontend] ✅ Generation complete!');
     }, 500);
 
   } catch (error) {
+    console.error('[Frontend] ❌ Error:', error);
+    console.error('[Frontend] Error stack:', error.stack);
     hideStatus();
     alert('Error: ' + error.message);
   }
