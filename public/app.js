@@ -245,6 +245,34 @@ form.addEventListener('submit', async (e) => {
     generatedMarkdown = resultData.data.markdown;
     console.log('[Frontend] Generated markdown length:', generatedMarkdown?.length);
 
+    // Deploy to GitHub if credentials provided
+    if (resultData.data.github) {
+      updateProgress(70, 'Deploying to GitHub Pages...');
+      console.log('[Frontend] Starting GitHub deployment...');
+
+      try {
+        const deployUrl = await deployToGitHub(
+          resultData.data.html,
+          resultData.data.github.username,
+          resultData.data.github.token,
+          resultData.data.github.repo
+        );
+
+        resultData.data.deployment = {
+          url: deployUrl,
+          repository: `${resultData.data.github.username}/${resultData.data.github.repo}`,
+          branch: 'gh-pages'
+        };
+
+        console.log('[Frontend] ✅ Deployed to:', deployUrl);
+      } catch (deployError) {
+        console.error('[Frontend] Deployment failed:', deployError);
+        alert('Slides generated but GitHub deployment failed: ' + deployError.message);
+      }
+    }
+
+    updateProgress(90, 'Finalizing...');
+
     // Show result
     setTimeout(() => {
       hideStatus();
@@ -259,6 +287,105 @@ form.addEventListener('submit', async (e) => {
     alert('Error: ' + error.message);
   }
 });
+
+// Deploy to GitHub (client-side)
+async function deployToGitHub(html, username, token, repo) {
+  console.log('[GitHub] Deploying to:', `${username}/${repo}`);
+
+  const apiBase = 'https://api.github.com';
+
+  // Step 1: Check if repo exists, create if not
+  try {
+    const checkRepo = await fetch(`${apiBase}/repos/${username}/${repo}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/vnd.github+json'
+      }
+    });
+
+    if (checkRepo.status === 404) {
+      console.log('[GitHub] Creating repository...');
+      const createRepo = await fetch(`${apiBase}/user/repos`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/vnd.github+json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          name: repo,
+          description: 'AI-generated presentation',
+          homepage: `https://${username}.github.io/${repo}`,
+          private: false,
+          has_issues: false,
+          has_wiki: false
+        })
+      });
+
+      if (!createRepo.ok) {
+        throw new Error('Failed to create repository');
+      }
+      console.log('[GitHub] ✅ Repository created');
+    }
+  } catch (error) {
+    console.error('[GitHub] Error checking/creating repo:', error);
+    throw error;
+  }
+
+  // Step 2: Create/update index.html in gh-pages branch
+  console.log('[GitHub] Uploading index.html...');
+
+  const content = btoa(unescape(encodeURIComponent(html)));
+
+  const uploadResponse = await fetch(`${apiBase}/repos/${username}/${repo}/contents/index.html`, {
+    method: 'PUT',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Accept': 'application/vnd.github+json',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      message: 'Deploy presentation',
+      content: content,
+      branch: 'gh-pages'
+    })
+  });
+
+  if (!uploadResponse.ok) {
+    const error = await uploadResponse.json();
+    throw new Error(error.message || 'Failed to upload file');
+  }
+
+  console.log('[GitHub] ✅ File uploaded');
+
+  // Step 3: Enable GitHub Pages
+  console.log('[GitHub] Enabling GitHub Pages...');
+
+  const pagesResponse = await fetch(`${apiBase}/repos/${username}/${repo}/pages`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Accept': 'application/vnd.github+json',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      source: {
+        branch: 'gh-pages',
+        path: '/'
+      }
+    })
+  });
+
+  // Ignore 409 (already enabled) or 422 (already exists)
+  if (!pagesResponse.ok && pagesResponse.status !== 409 && pagesResponse.status !== 422) {
+    console.warn('[GitHub] Pages may already be enabled');
+  }
+
+  const url = `https://${username}.github.io/${repo}`;
+  console.log('[GitHub] ✅ Deployment complete:', url);
+
+  return url;
+}
 
 // Copy URL button
 copyURLBtn.addEventListener('click', () => {

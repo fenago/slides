@@ -121,11 +121,8 @@ exports.handler = async (event, context) => {
 
     console.log('✅ Slides generated:', slideData.filename);
 
-    // STEP 2: Build Reveal.js presentation (using HTML generator - works in serverless!)
+    // STEP 2: Build Reveal.js HTML (lightweight, no deployment yet)
     console.log('🔨 Building Reveal.js presentation...');
-
-    const isServerless = process.cwd() === '/var/task' || process.env.AWS_LAMBDA_FUNCTION_NAME;
-    const outputDir = isServerless ? '/tmp/dist' : 'dist';
 
     const buildOptions = {
       theme: theme || 'black',
@@ -137,26 +134,14 @@ exports.handler = async (event, context) => {
       center: center !== false
     };
 
-    const buildResult = await buildStaticPresentation(slideData.markdown, outputDir, buildOptions);
-    console.log('✅ Presentation built');
+    // Generate HTML from markdown (no file system needed)
+    const { generateRevealHTML } = require('../../modules/reveal-html-generator');
+    const html = generateRevealHTML(slideData.markdown, buildOptions);
 
-    // STEP 3: Deploy to GitHub Pages (skip in test mode)
-    let deploymentResult = null;
+    console.log('✅ Presentation HTML built');
+    console.log('💡 Client will handle GitHub deployment');
 
-    if (!testMode && githubUsername && githubPAT && repoName) {
-      console.log('🚀 Deploying to GitHub Pages...');
-
-      deploymentResult = await deployToGitHubPages(
-        githubUsername,
-        githubPAT,
-        repoName,
-        buildResult.outputDir
-      );
-
-      console.log('✅ Deployed:', deploymentResult.url);
-    }
-
-    // Success response
+    // Success response - return HTML and markdown for client-side deployment
     return {
       statusCode: 200,
       headers: {
@@ -164,7 +149,7 @@ exports.handler = async (event, context) => {
       },
       body: JSON.stringify({
         success: true,
-        message: 'Presentation generated successfully!',
+        message: 'Slides generated successfully!',
         data: {
           slides: {
             filename: slideData.filename,
@@ -173,16 +158,15 @@ exports.handler = async (event, context) => {
             provider: slideData.metadata.provider,
             model: slideData.metadata.model
           },
-          build: {
-            theme: buildResult.theme,
-            outputDir: buildResult.outputDir
-          },
-          deployment: deploymentResult ? {
-            url: deploymentResult.url,
-            repository: `${deploymentResult.username}/${deploymentResult.repoName}`,
-            branch: deploymentResult.branch
-          } : null,
-          markdown: slideData.markdown // Include markdown in response
+          markdown: slideData.markdown,
+          html: html, // Full HTML for deployment
+          theme: buildOptions.theme,
+          // GitHub credentials passed through for client-side deployment
+          github: !testMode && githubUsername && githubPAT && repoName ? {
+            username: githubUsername,
+            token: githubPAT,
+            repo: repoName
+          } : null
         }
       })
     };
