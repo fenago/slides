@@ -56,7 +56,9 @@ async function generateSlides(config) {
     const timestamp = Date.now();
     const sanitizedTopic = topic.replace(/[^a-z0-9]/gi, '-').toLowerCase().substring(0, 50);
     const filename = `slides-${sanitizedTopic}-${timestamp}.md`;
-    const outputDir = process.env.NETLIFY ? '/tmp' : path.join(process.cwd(), 'generated');
+    // Detect serverless environment (AWS Lambda / Netlify Functions)
+    const isServerless = process.cwd() === '/var/task' || process.env.AWS_LAMBDA_FUNCTION_NAME;
+    const outputDir = isServerless ? '/tmp' : path.join(process.cwd(), 'generated');
     const filepath = path.join(outputDir, filename);
 
     // Ensure output directory exists
@@ -294,7 +296,9 @@ Here's my challenge to you: Pick ONE thing we discussed today. Just one. Apply i
   const timestamp = Date.now();
   const sanitizedTopic = topic.replace(/[^a-z0-9]/gi, '-').toLowerCase().substring(0, 50);
   const filename = `slides-${sanitizedTopic}-${timestamp}.md`;
-  const outputDir = process.env.NETLIFY ? '/tmp' : path.join(process.cwd(), 'generated');
+  // Detect serverless environment
+  const isServerless = process.cwd() === '/var/task' || process.env.AWS_LAMBDA_FUNCTION_NAME;
+  const outputDir = isServerless ? '/tmp' : path.join(process.cwd(), 'generated');
   const filepath = path.join(outputDir, filename);
 
   await fs.mkdir(outputDir, { recursive: true });

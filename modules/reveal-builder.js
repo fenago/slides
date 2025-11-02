@@ -30,7 +30,7 @@ async function buildRevealPresentation(markdownPath, options = {}) {
     fragments = true,
     autoSlide = 0,
     loop = false,
-    outputDir = process.env.NETLIFY ? '/tmp/dist' : 'dist',
+    outputDir = (process.cwd() === '/var/task' || process.env.AWS_LAMBDA_FUNCTION_NAME) ? '/tmp/dist' : 'dist',
     // Advanced options
     backgroundTransition = 'fade',
     navigationMode = 'default',
